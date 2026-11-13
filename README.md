@@ -25,9 +25,12 @@ An animated Lovelace card for **MEATER** wireless meat thermometers in Home Assi
 [![Open your Home Assistant instance and open a repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=nosehook&repository=meater-card&category=plugin)
 
 <!-- ha-marketplace:exclude-start -->
-### HACS / Marketplace (custom repository)
-1. Add `https://github.com/nosehook/meater-card` as a custom repository, category **Dashboard**.
-2. Install **MEATER Card** and reload your browser.
+### Marketplace (Home Assistant 2026.11 and later)
+1. Click the button above, or open the **Marketplace** in Home Assistant and add `https://github.com/nosehook/meater-card` by its link, category **Dashboard**.
+2. Install **MEATER Card** and reload your browser. The Marketplace adds the dashboard resource for you.
+
+### HACS (Home Assistant before 2026.11)
+Add `https://github.com/nosehook/meater-card` as a custom repository, category **Dashboard**, and install **MEATER Card**.
 
 ### Manual
 1. Copy `meater-card.js` to `/config/www/`.
