@@ -13,6 +13,7 @@ An animated Lovelace card for **MEATER** wireless meat thermometers in Home Assi
 - Footer with the time the cook will be ready, elapsed time and peak temperature
 - MEATER+ block illustration: the probe leaves the block while cooking, and the LED lights up when the probe is online
 - Finds the MEATER sensors automatically, whatever language your entity IDs are in
+- Visual editor: configure the card from the dashboard UI (v1.1.0)
 - Dutch and English labels
 
 ## Requirements
@@ -34,6 +35,8 @@ An animated Lovelace card for **MEATER** wireless meat thermometers in Home Assi
 <!-- ha-marketplace:exclude-end -->
 
 ## Configuration
+
+Add the card from the card picker and use the visual editor, or in YAML:
 
 ```yaml
 type: custom:meater-card

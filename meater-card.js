@@ -1,5 +1,5 @@
 /*
- * meater-card  v1.0.0
+ * meater-card  v1.1.0
  * Lovelace card for MEATER probes (core Home Assistant "meater" integration),
  * styled after custom:appliance-washer-card. Three nested 3/4 rings
  * (internal / target / ambient, scale 0–100) in the MEATER app colours,
@@ -21,7 +21,7 @@
  *   peak: sensor.meater_probe_xxxx_peak_temperature        # optional
  */
 (() => {
-  const VERSION = "1.0.0";
+  const VERSION = "1.1.0";
   const KEYS = {
     internal: "internal", ambient: "ambient", target: "cook_target_temp", cook_state: "cook_state",
     remaining: "cook_time_remaining", elapsed: "cook_time_elapsed", cook_name: "cook_name", peak: "cook_peak_temp",
@@ -184,6 +184,37 @@
 
   class MeaterCard extends HTMLElement {
     static getStubConfig() { return { name: "Meater" }; }
+
+    static getConfigForm() {
+      const ent = { entity: { domain: "sensor", integration: "meater" } };
+      return {
+        schema: [
+          { name: "name", selector: { text: {} } },
+          { name: "device_id", selector: { device: { integration: "meater" } } },
+          { type: "grid", name: "", flatten: true, schema: [
+            { name: "min", selector: { number: { min: -20, max: 100, step: 5, mode: "box", unit_of_measurement: "°" } } },
+            { name: "max", selector: { number: { min: 50, max: 400, step: 10, mode: "box", unit_of_measurement: "°" } } },
+          ] },
+          { name: "language", selector: { select: { mode: "dropdown", options: [{ value: "nl", label: "Nederlands" }, { value: "en", label: "English" }] } } },
+          { type: "expandable", name: "", title: "Sensoren handmatig kiezen (optioneel)", icon: "mdi:thermometer-probe", flatten: true, schema: [
+            { type: "grid", name: "", flatten: true, schema: [
+              { name: "internal", selector: ent }, { name: "target", selector: ent }, { name: "ambient", selector: ent },
+              { name: "peak", selector: ent }, { name: "cook_state", selector: ent }, { name: "cook_name", selector: ent },
+              { name: "remaining", selector: ent }, { name: "elapsed", selector: ent },
+            ] },
+          ] },
+        ],
+        computeLabel: (s) => ({
+          name: "Naam", device_id: "MEATER-probe", min: "Schaal minimum", max: "Schaal maximum", language: "Taal",
+          internal: "Interne temperatuur", target: "Doeltemperatuur", ambient: "Omgevingstemperatuur", peak: "Piektemperatuur",
+          cook_state: "Cook state", cook_name: "Gerecht", remaining: "Resterende tijd", elapsed: "Verstreken tijd",
+        }[s.name] ?? s.name),
+        computeHelper: (s) => ({
+          device_id: "Leeg = eerste MEATER-probe die gevonden wordt.",
+          max: "Ringen lopen van minimum tot maximum; standaard 0–100°.",
+        }[s.name]),
+      };
+    }
 
     setConfig(config) {
       this._config = { name: "Meater", min: 0, max: 100, ...config };
