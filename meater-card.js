@@ -1,5 +1,5 @@
 /*
- * meater-card  v1.1.0
+ * meater-card  v1.1.1
  * Lovelace card for MEATER probes (core Home Assistant "meater" integration),
  * styled after custom:appliance-washer-card. Three nested 3/4 rings
  * (internal / target / ambient, scale 0–100) in the MEATER app colours,
@@ -21,7 +21,7 @@
  *   peak: sensor.meater_probe_xxxx_peak_temperature        # optional
  */
 (() => {
-  const VERSION = "1.1.0";
+  const VERSION = "1.1.1";
   const KEYS = {
     internal: "internal", ambient: "ambient", target: "cook_target_temp", cook_state: "cook_state",
     remaining: "cook_time_remaining", elapsed: "cook_time_elapsed", cook_name: "cook_name", peak: "cook_peak_temp",
@@ -346,28 +346,63 @@
 
       // bubbles (MEATER app style)
       const unit = S("internal")?.attributes.unit_of_measurement || "°C";
-      const html = ["internal", "target", "ambient"].map((k) => {
+      // Bubbles and footer are built with DOM APIs (no innerHTML): units and entity
+      // ids come from entity attributes / card config and must never be parsed as markup.
+      const bubs = ["internal", "target", "ambient"].map((k) => {
         const v = vals[k];
-        return `<div class="bub${v == null ? " na" : ""}" data-entity="${e[k] || ""}" style="--bc:var(--mt-${k})" title="${v == null ? "" : v.toFixed(1) + " " + unit}">
-          <div class="circle">${v == null ? "—" : Math.round(v) + "°"}</div><div class="lbl">${this.t(k)}</div></div>`;
-      }).join("");
-      if (html !== this._lastStats) { this.$("stats").innerHTML = html; this._lastStats = html; }
+        return { k, e: e[k] || "", title: v == null ? "" : `${v.toFixed(1)} ${unit}`,
+          big: v == null ? "—" : `${Math.round(v)}°`, lbl: this.t(k), na: v == null };
+      });
+      const bsig = JSON.stringify(bubs);
+      if (bsig !== this._lastStats) {
+        const frag = document.createDocumentFragment();
+        for (const b of bubs) {
+          const bub = document.createElement("div");
+          bub.className = b.na ? "bub na" : "bub";
+          bub.setAttribute("data-entity", String(b.e));
+          bub.style.setProperty("--bc", `var(--mt-${b.k})`);
+          bub.setAttribute("title", String(b.title));
+          const circle = document.createElement("div");
+          circle.className = "circle";
+          circle.textContent = b.big;
+          const lbl = document.createElement("div");
+          lbl.className = "lbl";
+          lbl.textContent = String(b.lbl);
+          bub.append(circle, lbl);
+          frag.append(bub);
+        }
+        this.$("stats").replaceChildren(frag);
+        this._lastStats = bsig;
+      }
 
       // footer: ready at / elapsed / peak
       const parts = [];
       const loc = h.locale?.language || "nl";
       const hm = (t) => new Date(t).toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
-      if (end != null && rem > 0) parts.push(`<span data-entity="${e.remaining}">${this.t("ready_at")} <b>${hm(end)}</b></span>`);
+      if (end != null && rem > 0) parts.push([e.remaining, this.t("ready_at"), hm(end)]);
       const start = ts(S("elapsed"));
       if (start != null) {
         const m = Math.max(0, Math.round((Date.now() - start) / 60000));
-        parts.push(`<span data-entity="${e.elapsed}">${this.t("elapsed")} <b>${m >= 60 ? Math.floor(m / 60) + "u " + (m % 60) + "m" : m + " min"}</b></span>`);
+        parts.push([e.elapsed, this.t("elapsed"), m >= 60 ? Math.floor(m / 60) + "u " + (m % 60) + "m" : m + " min"]);
       }
       const pk = num(S("peak"));
-      if (pk != null) parts.push(`<span data-entity="${e.peak}">${this.t("peak")} <b>${Math.round(pk)}°</b></span>`);
+      if (pk != null) parts.push([e.peak, this.t("peak"), `${Math.round(pk)}°`]);
       const foot = this.$("foot");
       foot.hidden = !parts.length;
-      foot.innerHTML = parts.join("");
+      const fsig = JSON.stringify(parts);
+      if (fsig !== this._lastFoot) {
+        const frag = document.createDocumentFragment();
+        for (const [ent, label, value] of parts) {
+          const span = document.createElement("span");
+          span.setAttribute("data-entity", String(ent || ""));
+          const b = document.createElement("b");
+          b.textContent = String(value);
+          span.append(document.createTextNode(`${label} `), b);
+          frag.append(span);
+        }
+        foot.replaceChildren(frag);
+        this._lastFoot = fsig;
+      }
     }
   }
 
